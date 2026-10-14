@@ -101,16 +101,24 @@ func _test_ship_4dir_and_tilt(main: Node) -> void:
 	Input.action_release("move_down")
 	p._velocity = Vector2.ZERO; p.position = Vector2(400, 300); await _frames(2)
 
-	Input.action_press("move_left"); await _frames(15)
+	Input.action_press("move_left")
+	for i in 15:  # em headless o processo s60 roda 1x por tick; intercala fisica p/ delta real
+		await physics_frame
+		await process_frame
 	var left_ok: bool = p._velocity.x < -10.0 and p.position.x < 400.0
-	var tilt_left_ok := p.rotation > 0.05  # banca para esquerda
+	var rot_l := p.rotation  # captura ANTES de zerar a velocidade (tilt decai junto)
+	var tilt_left_ok := rot_l < -0.05  # banca para esquerda
 	Input.action_release("move_left")
 	p._velocity = Vector2.ZERO; p.position = Vector2(400, 300); p.rotation = 0.0
 	await _frames(2)
 
-	Input.action_press("move_right"); await _frames(15)
+	Input.action_press("move_right")
+	for i in 15:
+		await physics_frame
+		await process_frame
 	var right_ok: bool = p._velocity.x > 10.0 and p.position.x > 400.0
-	var tilt_right_ok := p.rotation < -0.05
+	var rot_r := p.rotation
+	var tilt_right_ok := rot_r > 0.05
 	Input.action_release("move_right")
 	p._velocity = Vector2.ZERO
 

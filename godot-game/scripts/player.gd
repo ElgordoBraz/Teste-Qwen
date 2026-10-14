@@ -25,7 +25,7 @@ func _ready() -> void:
 	queue_redraw()
 
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not _alive:
 		return
 
@@ -67,6 +67,8 @@ func _process(delta: float) -> void:
 		_velocity.y = minf(_velocity.y, 0.0)
 
 	# --- Inclinação natural: a nave "banca" conforme a velocidade horizontal ---
+	# Sinal: no eixo da tela, +x = direita; rotacao horaria (sentido de Godot)
+	# inclina o nariz para a direita => tilt deve TER o mesmo sinal de vx.
 	var target_tilt := clampf(_velocity.x / max_speed, -1.0, 1.0) * TILT_MAX
 	_tilt = lerpf(_tilt, target_tilt, 10.0 * delta)
 	rotation = _tilt
