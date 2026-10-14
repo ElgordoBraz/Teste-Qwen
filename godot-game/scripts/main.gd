@@ -3,12 +3,14 @@ extends Node2D
 ## Orquestra o jogo: spawna asteroides, conta pontos, controla dificuldade,
 ## alterna entre gameplay e tela de Game Over (R para reiniciar).
 
-@export var asteroid_scene: PackedScene  # arrastar scenes/asteroid.tscn aqui
+@export var asteroid_scene: PackedScene  # já ligado a scenes/asteroid.tscn no .tscn
 
 @onready var player: Area2D = $Player
 @onready var score_label: Label = $UI/ScoreLabel
 @onready var game_over_panel: PanelContainer = $UI/GameOverPanel
 @onready var final_score_label: Label = $UI/GameOverPanel/VBox/FinalScoreLabel
+
+const SPAWN_Y := -60.0  # nasce acima da tela
 
 var _score: int = 0
 var _game_active: bool = false
@@ -17,7 +19,7 @@ var _elapsed: float = 0.0
 
 
 func _ready() -> void:
-	game_over_panel.visible = false
+	player.position = Vector2(400.0, 520.0)
 	player.died.connect(_on_player_died)
 	_start_game()
 
@@ -29,13 +31,8 @@ func _start_game() -> void:
 	_game_active = true
 	game_over_panel.visible = false
 	score_label.text = "Pontos: 0"
-	# Reposiciona e reativa a nave sem recarregar a cena.
+	player.revive()
 	player.position = Vector2(400.0, 520.0)
-	player.visible = true
-	player.set_process(true)
-	var shape := player.get_node_or_null("CollisionShape2D")
-	if shape:
-		shape.disabled = false
 	# Limpa asteroides restantes de uma partida anterior.
 	get_tree().call_group("asteroids", "queue_free")
 
@@ -45,8 +42,6 @@ func _process(delta: float) -> void:
 		return
 
 	_elapsed += delta
-	_score += 1  # sobrevivência gera pontos continuamente
-	score_label.text = "Pontos: %d" % _score
 
 	# Dificuldade progressiva: intervalo de spawn cai de 0,9s até 0,25s.
 	var interval := clampf(0.9 - _elapsed * 0.01, 0.25, 0.9)
@@ -63,13 +58,23 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _spawn_asteroid() -> void:
 	if asteroid_scene == null:
-		push_error("asteroid_scene não atribuído! Arraste asteroid.tscn na inspetor do nó Main.")
+		push_error("asteroid_scene não atribuído! Arraste scenes/asteroid.tscn no Inspetor do nó Main.")
 		return
 	var asteroid := asteroid_scene.instantiate()
+	add_child(asteroid)
 	# Largura da área visível (800 px no projeto).
 	var vw := get_viewport_rect().size.x
-	asteroid.position = Vector2(randf_range(30.0, vw - 30.0), -60.0)
-	add_child(asteroid)
+	asteroid.position = Vector2(randf_range(30.0, vw - 30.0), SPAWN_Y)
+	# Velocidade escala com o tempo de jogo (mais difícil com o passar dos segundos).
+	asteroid.min_speed = 160.0 + _elapsed * 3.0
+	asteroid.max_speed = 340.0 + _elapsed * 5.0
+	asteroid.passed.connect(_on_asteroid_passed)
+
+
+func _on_asteroid_passed() -> void:
+	if _game_active:
+		_score += 10
+		score_label.text = "Pontos: %d" % _score
 
 
 func _on_player_died() -> void:

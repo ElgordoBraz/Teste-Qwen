@@ -1,37 +1,41 @@
-extends RigidBody2D
-## asteroid.gd — colocar no nó raiz "Asteroid" (RigidBody2D) da cena asteroid.tscn.
+extends Area2D
+## asteroid.gd — colocar no nó raiz "Asteroid" (Area2D) da cena asteroid.tscn.
 ## O asteroide cai em linha reta com velocidade própria e se auto-destrói
-## quando sai pela parte inferior da tela.
+## quando sai pela parte inferior/lateral da tela.
+##
+## OBS: usamos Area2D (e não RigidBody2D) de propósito:
+## - o movimento é 100% controlado pelo script, independente do motor físico;
+## - a nave (também Area2D) detecta a colisão via area_entered, pois
+##   Area2D NÃO detecta outros Area2D através de body_entered.
 
-@export var min_speed: float = 140.0   # px/s
-@export var max_speed: float = 320.0   # px/s
+signal passed  # emitido uma única vez quando o asteroide ultrapassa a nave
+
+var min_speed: float = 160.0   # px/s (velocidade mínima)
+var max_speed: float = 340.0   # px/s (velocidade máxima)
 
 var _fall_speed: float = 200.0
 var _spin: float = 0.0
+var _counted: bool = false
 
 
 func _ready() -> void:
-	# Grupo usado pelo Player para identificar colisões perigosas.
 	add_to_group("asteroids")
-
-	# Física simples: sem gravidade do mundo e sem torque;
-	# controlamos a queda manualmente em _physics_process.
-	gravity_scale = 0.0
-	can_sleep = false
-
 	_fall_speed = randf_range(min_speed, max_speed)
 	_spin = randf_range(-2.0, 2.0)  # rotação apenas visual
 	queue_redraw()
 
 
-func _physics_process(delta: float) -> void:
+func _process(delta: float) -> void:
 	position.y += _fall_speed * delta
 	rotation += _spin * delta
-
-	# Redesenha o asteroide (rotação visual).
 	queue_redraw()
 
-	# Auto-destruição fora da tela (abaixo ou laterais).
+	# Ponto por sobrevivência: quando o asteroide passa abaixo da linha da nave.
+	if not _counted and position.y > 560.0:
+		_counted = true
+		passed.emit()
+
+	# Auto-destruição fora da tela.
 	var vp := get_viewport_rect().size
 	if position.y > vp.y + 80.0 or position.x < -80.0 or position.x > vp.x + 80.0:
 		queue_free()

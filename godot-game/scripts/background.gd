@@ -9,6 +9,7 @@ var _twinkle: float = 0.0
 func _ready() -> void:
 	for i in 60:
 		_stars.append(Vector2(randf() * size.x, randf() * size.y))
+	queue_redraw()
 
 
 func _process(delta: float) -> void:

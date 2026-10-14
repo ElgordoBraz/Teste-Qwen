@@ -11,9 +11,8 @@ var _alive: bool = true
 
 
 func _ready() -> void:
-	# Conecta o sinal de colisão da Area2D com o corpo do asteroide.
-	body_entered.connect(_on_body_entered)
-	position = Vector2(400.0, 520.0)
+	# Area2D detecta OUTRA Area2D pelo sinal area_entered (não body_entered!).
+	area_entered.connect(_on_area_entered)
 	queue_redraw()
 
 
@@ -50,10 +49,19 @@ func _draw() -> void:
 	]), Color(1.0, 0.55, 0.1))
 
 
-func _on_body_entered(body: Node) -> void:
-	if not _alive or body == null:
+func revive() -> void:
+	_alive = true
+	visible = true
+	set_process(true)
+	var shape := get_node_or_null("CollisionShape2D")
+	if shape:
+		shape.set_deferred("disabled", false)
+
+
+func _on_area_entered(area: Area2D) -> void:
+	if not _alive or area == null:
 		return
-	if body.is_in_group("asteroids"):
+	if area.is_in_group("asteroids"):
 		_alive = false
 		visible = false
 		set_process(false)
