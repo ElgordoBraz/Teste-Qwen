@@ -28,6 +28,15 @@ offset_bottom = 40.0
 theme_override_font_sizes/font_size = 26
 text = "Pontos: 0"
 
+[node name="LivesLabel" type="Label" parent="UI"]
+offset_left = 560.0
+offset_top = 8.0
+offset_right = 784.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 2
+text = "Vidas: ♥♥♥"
+
 [node name="GameOverPanel" type="PanelContainer" parent="UI"]
 visible = false
 anchors_preset = 8
@@ -62,4 +71,4 @@ text = "Pontuação final: 0"
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
-text = "Pressione R para reiniciar"
+text = "WASD/Setas mover | ESPACO atirar | R reiniciar"
